@@ -30,31 +30,40 @@ import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.bumptech.glide.Glide;
 import com.soumit.smartnews.R;
 import com.soumit.smartnews.model.Model;
 import com.soumit.smartnews.model.entity.NYTimesStory;
+import com.soumit.smartnews.ui.ItemClickListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
+import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ItemClickListener{
 
     @BindView(R.id.refresh_view)
     SwipeRefreshLayout refreshView;
-    @BindView(R.id.list_view) ListView listView;
+    @BindView(R.id.list_view) RecyclerView listView;
     @BindView(R.id.progressbar)
     ProgressBar progressBar;
     @BindView(R.id.spinner) Spinner spinner;
 
     MainPresenter presenter = new MainPresenter(this, Model.getInstance());
-    private ArrayAdapter<NYTimesStory> adapter;
+//    private ArrayAdapter<NYTimesStory> adapter;
+    private NewsListRecyclerAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         adapter = null;
-        listView.setOnItemClickListener((parent, view, position, id) -> presenter.listItemSelected(position));
-        listView.setEmptyView(getLayoutInflater().inflate(R.layout.common_emptylist, listView, false));
 
         refreshView.setOnRefreshListener(() -> presenter.refreshList());
         progressBar.setVisibility(View.INVISIBLE);
@@ -116,18 +123,92 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showList(List<NYTimesStory> items) {
-        if (adapter == null) {
-            adapter = new NewsListAdapter(MainActivity.this, items);
-            listView.setAdapter(adapter);
-        } else {
-            adapter.clear();
-            adapter.addAll(items);
-            adapter.notifyDataSetChanged();
-        }
+
+        adapter = new NewsListRecyclerAdapter(this, items, this );
+        listView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        listView.setAdapter(adapter);
+
+//        if (adapter == null) {
+//            adapter = new NewsListRecyclerAdapter(this, items, this);
+//            listView.setAdapter(adapter);
+//        } else {
+////            adapter.clear();
+////            adapter.addAll(items);
+//            adapter.notifyDataSetChanged();
+//        }
+
     }
 
     public void showNetworkLoading(Boolean networkInUse) {
         progressBar.setVisibility(networkInUse ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @Override
+    public void onItemClicked(int position, String viewTag) {
+        presenter.listItemSelected(position);
+    }
+
+    //Recyclerview adapter class
+    public static class NewsListRecyclerAdapter extends RecyclerView.Adapter<NewsListRecyclerAdapter.NewsViewHolder>{
+
+        private static final String TAG = "NewsListRecyclerAdapter";
+        private Context context;
+        private List<NYTimesStory> initialData = new ArrayList<>();
+        private ItemClickListener clickListener;
+        @ColorInt
+        private final int readColor;
+        @ColorInt private final int unreadColor;
+
+        public NewsListRecyclerAdapter(Context context, List<NYTimesStory> initialData, ItemClickListener clickListener) {
+            this.context = context;
+            this.initialData = initialData;
+            this.clickListener = clickListener;
+            readColor = context.getResources().getColor(android.R.color.darker_gray);
+            unreadColor = context.getResources().getColor(android.R.color.primary_text_light);
+        }
+
+        @NonNull
+        @Override
+        public NewsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_news, parent, false);
+            return new NewsViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull NewsViewHolder holder, int position) {
+            NYTimesStory nyTimesStory = initialData.get(position);
+//            if(nyTimesStory.getMultimedia() != null && nyTimesStory.getMultimedia().get(0) != null) {
+//                Glide.with(context).load(nyTimesStory.getMultimedia().get(0).getUrl()).into(holder.newsImage);
+//            }
+            holder.headlineTxt.setText(nyTimesStory.getTitle());
+            holder.headlineTxt.setTextColor(nyTimesStory.isRead() ? readColor : unreadColor);
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    clickListener.onItemClicked(position, "news_details");
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return initialData.size();
+        }
+
+        public class NewsViewHolder extends RecyclerView.ViewHolder {
+
+            @BindView(R.id.news_image)
+            AppCompatImageView newsImage;
+            @BindView(R.id.headlineTxt)
+            TextView headlineTxt;
+            @BindView(R.id.timeTxt)
+            TextView timeTxt;
+
+            public NewsViewHolder(@NonNull View itemView) {
+                super(itemView);
+                ButterKnife.bind(this, itemView);
+            }
+        }
     }
 
     // ListView adapter class

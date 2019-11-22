@@ -18,6 +18,7 @@ package com.soumit.smartnews.ui.main;
 
 import android.content.Intent;
 
+import com.soumit.smartnews.R;
 import com.soumit.smartnews.model.Model;
 import com.soumit.smartnews.model.entity.NYTimesStory;
 import com.soumit.smartnews.ui.Presenter;
@@ -87,6 +88,7 @@ public class MainPresenter implements Presenter {
     public void listItemSelected(int position) {
         Intent intent = DetailsActivity.getIntent(view, storiesData.get(position));
         view.startActivity(intent);
+        view.overridePendingTransition(R.anim.enter, R.anim.exit);
     }
 
     public void titleSpinnerSectionSelected(@NonNull String sectionLabel) {

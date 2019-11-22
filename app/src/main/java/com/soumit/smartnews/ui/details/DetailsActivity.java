@@ -82,6 +82,12 @@ public class DetailsActivity extends AppCompatActivity {
         presenter.onPause();
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.nothing, R.anim.slide_out);
+    }
+
     public void showLoader() {
         loaderView.setAlpha(1.0f);
         loaderView.setVisibility(View.VISIBLE);

@@ -170,9 +170,9 @@ public class NYTimesStory extends RealmObject {
         this.kicker = kicker;
     }
 
-//    public RealmList<NYTimesMultimedium> getMultimedia() {
-//        return multimedia;
-//    }
+    public RealmList<NYTimesMultimedium> getMultimedia() {
+        return multimedia;
+    }
 
 //    @JsonDeserialize(using = RealmListNYTimesMultimediumDeserializer.class)
 //    public void setMultimedia(RealmList<NYTimesMultimedium> multimedia) {
